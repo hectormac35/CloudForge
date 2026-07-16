@@ -1,0 +1,10 @@
+namespace CloudForge.Domain.Deployments;
+
+public enum DeploymentStatus
+{
+    Pending = 1,
+    Running = 2,
+    Succeeded = 3,
+    Failed = 4,
+    Cancelled = 5
+}
