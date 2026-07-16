@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CloudForge.Api/CloudForge.Api.csproj" />
+    <Project Path="src/CloudForge.Application/CloudForge.Application.csproj" />
+    <Project Path="src/CloudForge.Domain/CloudForge.Domain.csproj" />
+    <Project Path="src/CloudForge.Infrastructure/CloudForge.Infrastructure.csproj" />
+    <Project Path="src/CloudForge.SharedKernel/CloudForge.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CloudForge.Tests/CloudForge.Tests.csproj" />
+  </Folder>
+</Solution>
