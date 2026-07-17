@@ -1,37 +1,24 @@
-# CloudForge
+# 🚀 CloudForge
 
-> Build. Deploy. Automate.
+> **Proyecto de portfolio DevOps desarrollado con ASP.NET Core, Terraform, Docker, Azure y GitHub Actions.**
 
-CloudForge is a DevOps portfolio project focused on provisioning Microsoft Azure infrastructure with Terraform and deploying a containerized ASP.NET Core API through GitHub Actions.
+---
 
-## Goals
+## 📖 Descripción
 
-- Provision Azure resources using Infrastructure as Code.
-- Containerize an ASP.NET Core API with Docker.
-- Automate build, test and deployment workflows.
-- Add monitoring and centralized logging.
-- Apply secure configuration and cost-control practices.
+CloudForge es un proyecto de portfolio diseñado para demostrar conocimientos prácticos en desarrollo backend, infraestructura como código (IaC), contenedores y automatización de procesos.
 
-## Technology stack
+El objetivo principal es construir una plataforma moderna aplicando tecnologías y prácticas utilizadas en entornos profesionales, manteniendo una arquitectura limpia, un alto nivel de automatización y una infraestructura reproducible mediante Terraform.
 
-- .NET 10 and ASP.NET Core
-- Docker
-- Terraform
-- Microsoft Azure
-- GitHub Actions
-- Application Insights
-- Log Analytics
+Actualmente el proyecto incluye:
 
-## Architecture
+- ✅ ASP.NET Core 10
+- ✅ Clean Architecture
+- ✅ Terraform modular
+- ✅ Azure Storage
+- ✅ Azure Monitor (Log Analytics + Application Insights)
+- ✅ Docker multi-stage
+- ✅ Integración Continua con GitHub Actions
+- ✅ Pruebas automatizadas
 
-CloudForge uses a simplified Clean Architecture:
-
-- `CloudForge.Domain`
-- `CloudForge.Application`
-- `CloudForge.Infrastructure`
-- `CloudForge.Api`
-- `CloudForge.SharedKernel`
-
-## Current status
-
-Initial solution structure, project references and dependency security checks completed.
+---
