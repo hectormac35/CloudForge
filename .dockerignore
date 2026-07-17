@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Visual Studio / VS Code
+.vs
+.vscode
+.idea
+
+# Compilación .NET
+**/bin
+**/obj
+**/TestResults
+**/*.user
+**/*.suo
+
+# Terraform
+**/.terraform
+**/*.tfstate
+**/*.tfstate.*
+**/tfplan
+**/crash.log
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+
+# Documentación y archivos locales
+README.local.md
+*.log
+*.tmp
+.env
+.env.*
