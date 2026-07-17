@@ -502,3 +502,9 @@ appsettings.Local.json
 
 # IDE local settings
 .vscode/
+
+# Terraform saved plans without extension
+**/tfplan
+
+# Configuración Terraform no sensible del entorno de desarrollo
+!infrastructure/environments/dev/terraform.tfvars
