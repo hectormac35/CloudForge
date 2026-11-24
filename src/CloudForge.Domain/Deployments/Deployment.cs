@@ -54,6 +54,13 @@ public sealed class Deployment : Entity
                 nameof(version));
         }
 
+        if (!Enum.IsDefined(environment))
+        {
+            throw new ArgumentException(
+                "El entorno del despliegue no es válido.",
+                nameof(environment));
+        }
+
         ApplicationName = applicationName.Trim();
         Version = version.Trim();
         Environment = environment;

@@ -24,10 +24,26 @@ variable "sku_name" {
   default     = "F1"
 }
 
-variable "dotnet_version" {
-  description = "Versión de .NET usada por la aplicación."
+variable "container_image" {
+  description = "Imagen y etiqueta del contenedor, sin el registro (p. ej. hectormac35/cloudforge-api:latest)."
   type        = string
-  default     = "8.0"
+}
+
+variable "container_registry_url" {
+  description = "URL del registro de contenedores."
+  type        = string
+  default     = "https://ghcr.io"
+}
+
+variable "aspnetcore_environment" {
+  description = "Valor de ASPNETCORE_ENVIRONMENT en la aplicación."
+  type        = string
+  default     = "Production"
+
+  validation {
+    condition     = contains(["Development", "Staging", "Production"], var.aspnetcore_environment)
+    error_message = "aspnetcore_environment debe ser Development, Staging o Production."
+  }
 }
 
 variable "application_insights_connection_string" {

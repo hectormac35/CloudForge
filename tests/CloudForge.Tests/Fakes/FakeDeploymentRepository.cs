@@ -33,4 +33,11 @@ internal sealed class FakeDeploymentRepository : IDeploymentRepository
 
         return Task.FromResult(result);
     }
+
+    public Task UpdateAsync(
+        Deployment deployment,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
 }

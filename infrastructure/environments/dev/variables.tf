@@ -28,3 +28,27 @@ variable "log_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "environment" {
+  description = "Nombre corto del entorno (se usa en nombres y etiquetas)."
+  type        = string
+  default     = "dev"
+}
+
+variable "enable_app_service" {
+  description = "Crea el App Service con la API en contenedor. Desactivado por defecto para no generar costes."
+  type        = bool
+  default     = false
+}
+
+variable "web_app_name" {
+  description = "Nombre global único del App Service (solo si enable_app_service = true)."
+  type        = string
+  default     = "app-cloudforge-dev"
+}
+
+variable "container_image" {
+  description = "Imagen de la API en GHCR, sin el registro."
+  type        = string
+  default     = "hectormac35/cloudforge-api:latest"
+}

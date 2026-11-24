@@ -14,4 +14,8 @@ public interface IDeploymentRepository
 
     Task<IReadOnlyCollection<Deployment>> GetAllAsync(
         CancellationToken cancellationToken = default);
+
+    Task UpdateAsync(
+        Deployment deployment,
+        CancellationToken cancellationToken = default);
 }

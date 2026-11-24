@@ -24,3 +24,9 @@ variable "account_replication_type" {
   type        = string
   default     = "LRS"
 }
+
+variable "environment" {
+  description = "Entorno de despliegue (se usa en las etiquetas)."
+  type        = string
+  default     = "dev"
+}

@@ -5,11 +5,7 @@ resource "azurerm_service_plan" "this" {
   os_type             = "Linux"
   sku_name            = var.sku_name
 
-  tags = {
-    project     = "CloudForge"
-    environment = var.environment
-    managed_by  = "Terraform"
-  }
+  tags = local.tags
 }
 
 resource "azurerm_linux_web_app" "this" {
@@ -20,19 +16,28 @@ resource "azurerm_linux_web_app" "this" {
   https_only          = true
 
   site_config {
-    always_on = false
+    # El plan F1 (gratuito) no admite always_on
+    always_on         = var.sku_name != "F1"
+    health_check_path = "/health"
+    ftps_state        = "Disabled"
 
     application_stack {
-      dotnet_version = var.dotnet_version
+      # Imagen publicada por el workflow publish-container.yml
+      docker_image_name   = var.container_image
+      docker_registry_url = var.container_registry_url
     }
   }
 
   app_settings = {
-    ASPNETCORE_ENVIRONMENT                      = "Development"
-    APPLICATIONINSIGHTS_CONNECTION_STRING       = var.application_insights_connection_string
-    ApplicationInsightsAgent_EXTENSION_VERSION  = "~3"
+    ASPNETCORE_ENVIRONMENT                = var.aspnetcore_environment
+    WEBSITES_PORT                         = "8080"
+    APPLICATIONINSIGHTS_CONNECTION_STRING = var.application_insights_connection_string
   }
 
+  tags = local.tags
+}
+
+locals {
   tags = {
     project     = "CloudForge"
     environment = var.environment

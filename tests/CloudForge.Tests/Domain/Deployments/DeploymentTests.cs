@@ -127,4 +127,12 @@ public sealed class DeploymentTests
             "1.0.0",
             DeploymentEnvironment.Development);
     }
+
+    [Fact]
+    public void Constructor_WithUndefinedEnvironment_Throws()
+    {
+        // Si el JSON no trae el entorno, llega como 0, que no es un valor definido
+        Assert.Throws<ArgumentException>(() =>
+            new Deployment("CloudForge.Api", "1.0.0", (DeploymentEnvironment)0));
+    }
 }

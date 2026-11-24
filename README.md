@@ -1,452 +1,223 @@
 <p align="center">
-  <img src="docs/images/banner.png" alt="CloudForge Banner" width="100%">
+  <img src="docs/images/banner.png" alt="CloudForge: API de seguimiento de despliegues con .NET 10, Terraform y Azure" width="100%">
 </p>
-
-# 🚀 CloudForge
-
-> **Proyecto de portfolio DevOps desarrollado con ASP.NET Core, Terraform, Docker, Azure y GitHub Actions.**
-
-![Estado](https://img.shields.io/badge/Estado-En%20desarrollo-blue)
-![.NET](https://img.shields.io/badge/.NET-10-purple)
-![Docker](https://img.shields.io/badge/Docker-✓-2496ED)
-![Terraform](https://img.shields.io/badge/Terraform-✓-7B42BC)
-![Azure](https://img.shields.io/badge/Azure-✓-0078D4)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI-success)
-
----
-
-# 📖 Descripción
-
-CloudForge es un proyecto de portfolio cuyo objetivo es demostrar conocimientos reales en desarrollo backend, infraestructura como código (IaC), automatización, contenedores y tecnologías Cloud.
-
-No se trata de un proyecto de ejemplo, sino de una plataforma diseñada para aplicar prácticas utilizadas en entornos profesionales:
-
-- Arquitectura limpia (Clean Architecture).
-- Infraestructura desplegada mediante Terraform.
-- Contenedores Docker.
-- Integración Continua con GitHub Actions.
-- Servicios de Azure.
-- Pruebas automatizadas.
-
----
-
-# 🛠️ Tecnologías utilizadas
-
-| Categoría | Tecnologías |
-|-----------|-------------|
-| Backend | ASP.NET Core 10 |
-| Arquitectura | Clean Architecture |
-| Cloud | Microsoft Azure |
-| Infraestructura | Terraform |
-| Contenedores | Docker |
-| Automatización | GitHub Actions |
-| Monitorización | Application Insights · Log Analytics |
-| Testing | xUnit |
-| Control de versiones | Git + GitHub |
-
-# 🏗️ Arquitectura
 
 <p align="center">
-  <img src="docs/images/architecture.svg" alt="CloudForge Architecture" width="100%">
+  <a href="https://github.com/hectormac35/CloudForge/actions/workflows/ci.yml"><img src="https://github.com/hectormac35/CloudForge/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/hectormac35/CloudForge/actions/workflows/codeql.yml"><img src="https://github.com/hectormac35/CloudForge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
+  <img src="https://img.shields.io/badge/.NET-10-512BD4" alt=".NET 10">
+  <img src="https://img.shields.io/badge/Terraform-azurerm%204.x-7B42BC" alt="Terraform">
+  <img src="https://img.shields.io/badge/imagen-ghcr.io-24292F" alt="GHCR">
 </p>
 
-CloudForge sigue el patrón **Clean Architecture**, separando claramente la lógica de negocio, los casos de uso, la infraestructura y la capa de presentación.
+**CloudForge** es una API REST para **registrar despliegues de software y seguir su estado** (pendiente → en ejecución → correcto / fallido / cancelado). La API es pequeña a propósito: lo que el proyecto quiere enseñar es todo lo que la rodea, es decir, una arquitectura por capas con tests, una imagen Docker que se analiza antes de publicarse, y la infraestructura de Azure descrita en Terraform y validada en cada push.
 
-Esta organización facilita:
+| | |
+|---|---|
+| **Qué resuelve** | Saber qué versión se desplegó, dónde, desde qué commit, cuánto tardó y cómo terminó. |
+| **Stack** | ASP.NET Core 10 (Minimal API) · xUnit · Docker · Terraform · Azure · GitHub Actions |
+| **Estado** | API funcional con almacenamiento en memoria; infraestructura de Azure con el App Service opcional. |
 
-- Mantenimiento del código.
-- Escalabilidad del proyecto.
-- Independencia entre capas.
-- Mayor facilidad para realizar pruebas.
-- Sustitución de tecnologías sin afectar al dominio.
+---
 
-## Estructura del proyecto
+## Índice
+
+1. [Arquitectura](#1-arquitectura)
+2. [La API](#2-la-api)
+3. [Ciclo de vida de un despliegue](#3-ciclo-de-vida-de-un-despliegue)
+4. [Ejecutarlo en local](#4-ejecutarlo-en-local)
+5. [Tests](#5-tests)
+6. [Infraestructura en Azure (Terraform)](#6-infraestructura-en-azure-terraform)
+7. [CI/CD y seguridad](#7-cicd-y-seguridad)
+8. [Decisiones y límites conocidos](#8-decisiones-y-límites-conocidos)
+
+---
+
+## 1. Arquitectura
+
+<p align="center"><img src="docs/images/architecture.png" alt="Capas de la solución y recursos de Azure" width="100%"></p>
+
+La solución sigue **Clean Architecture**: el dominio no depende de nada, y la base de datos o la API se pueden cambiar sin tocar las reglas de negocio. La decisión está documentada en [`docs/decisions/ADR-001`](docs/decisions/ADR-001-clean-architecture.md).
+
+| Proyecto | Responsabilidad | Ejemplos |
+|---|---|---|
+| `CloudForge.Domain` | Reglas de negocio | `Deployment` con sus transiciones de estado válidas |
+| `CloudForge.Application` | Casos de uso y puertos | `RegisterDeployment`, `GetDeployments`, `ChangeDeploymentStatus`, `IDeploymentRepository` |
+| `CloudForge.Infrastructure` | Adaptadores | `InMemoryDeploymentRepository` (thread-safe con `ConcurrentDictionary`) |
+| `CloudForge.Api` | HTTP | Endpoints, OpenAPI, health check, errores como `ProblemDetails` |
+| `CloudForge.SharedKernel` | Piezas comunes | `DomainException` |
+
+<details>
+<summary><b>Estructura de carpetas</b></summary>
 
 ```text
-CloudForge
-│
-├── src
-│   ├── CloudForge.Api
-│   ├── CloudForge.Application
-│   ├── CloudForge.Domain
-│   ├── CloudForge.Infrastructure
-│   └── CloudForge.SharedKernel
-│
-├── tests
-│
-├── infrastructure
-│   ├── environments
-│   ├── modules
-│   └── bootstrap
-│
-├── docker
-│
-├── docs
-│
-└── .github
-    └── workflows
+CloudForge/
+├── src/                      # Api · Application · Domain · Infrastructure · SharedKernel
+├── tests/CloudForge.Tests/   # Domain · Application · Infrastructure · Api (integración)
+├── infrastructure/
+│   ├── environments/dev/     # composición del entorno + terraform.tfvars
+│   └── modules/              # resource-group · storage · monitoring · app-service
+├── docker/Dockerfile         # multi-stage, usuario sin privilegios
+├── scripts/demo-api.sh       # recorre el ciclo de vida por HTTP
+├── docs/                     # ADR e imágenes
+└── .github/                  # ci · publish-container · codeql · dependabot
+```
+</details>
+
+---
+
+## 2. La API
+
+| Método | Ruta | Respuesta |
+|---|---|---|
+| `GET` | `/` | Nombre, versión y estado del servicio |
+| `GET` | `/health` | `Healthy` (lo usan Docker, la CI y el App Service) |
+| `GET` | `/api/deployments?environment=&status=` | Lista, del más reciente al más antiguo, con filtros opcionales |
+| `GET` | `/api/deployments/{id}` | `200` o `404` |
+| `POST` | `/api/deployments` | `201 Created` con cabecera `Location` · `400` si los datos no son válidos |
+| `POST` | `/api/deployments/{id}/start` | `Pending → Running` |
+| `POST` | `/api/deployments/{id}/succeed` | `Running → Succeeded` (calcula la duración) |
+| `POST` | `/api/deployments/{id}/fail` | `Running → Failed` |
+| `POST` | `/api/deployments/{id}/cancel` | Cancela si todavía no ha terminado |
+
+Los enums viajan como texto (`"Staging"`, `"Running"`) y **todos los errores** siguen el estándar RFC 9457 (`application/problem+json`):
+
+| Situación | Código |
+|---|---|
+| Faltan datos o el entorno no es válido | `400 Bad Request` |
+| El despliegue no existe | `404 Not Found` |
+| La transición no está permitida (p. ej. `succeed` sobre un `Pending`) | `409 Conflict` |
+
+<details>
+<summary><b>Ejemplo: registrar un despliegue</b></summary>
+
+```http
+POST /api/deployments
+Content-Type: application/json
+
+{
+  "applicationName": "CloudForge.Api",
+  "version": "1.4.0",
+  "environment": "Staging",
+  "commitSha": "a1b2c3d",
+  "branch": "main"
+}
 ```
 
-## Descripción de cada proyecto
-
-### CloudForge.Api
-
-Punto de entrada de la aplicación ASP.NET Core.
-
-Responsabilidades:
-
-- Configuración de la API.
-- Configuración de dependencias.
-- Endpoints HTTP.
-- Health Checks.
-- OpenAPI.
+Entornos válidos: `Development`, `Staging`, `Production`.
+</details>
 
 ---
 
-### CloudForge.Application
+## 3. Ciclo de vida de un despliegue
 
-Implementa los casos de uso de la aplicación.
+<p align="center"><img src="docs/images/deployment-lifecycle.png" alt="Diagrama de estados: Pending, Running, Succeeded, Failed y Cancelled" width="100%"></p>
 
-Aquí se encuentra:
-
-- Lógica de aplicación.
-- Interfaces.
-- Casos de uso.
-- Servicios.
+Las reglas viven en la entidad `Deployment` (capa de dominio), no en los endpoints. La API solo traduce: si el dominio lanza `DomainException`, la respuesta es un `409`.
 
 ---
 
-### CloudForge.Domain
+## 4. Ejecutarlo en local
 
-Contiene el núcleo del negocio.
-
-Incluye:
-
-- Entidades.
-- Value Objects.
-- Enumeraciones.
-- Reglas de negocio.
-- Excepciones del dominio.
-
-Esta capa no depende de ninguna otra.
-
----
-
-### CloudForge.Infrastructure
-
-Implementa el acceso a recursos externos.
-
-Ejemplos:
-
-- Persistencia.
-- Azure.
-- Servicios externos.
-- Implementaciones de interfaces.
-
----
-
-### CloudForge.SharedKernel
-
-Contiene elementos reutilizables compartidos por el resto de proyectos.
-
-Por ejemplo:
-
-- Entidades base.
-- Excepciones comunes.
-- Utilidades compartidas.
-
----
-
-### tests
-
-Proyecto de pruebas automatizadas desarrollado con **xUnit**.
-
-Actualmente incluye pruebas para:
-
-- Dominio.
-- Casos de uso.
-- Reglas de negocio.
-
----
-
-# ☁️ Infraestructura en Azure
-
-Toda la infraestructura de CloudForge se gestiona mediante **Infraestructura como Código (IaC)** utilizando **Terraform**.
-
-Actualmente el proyecto despliega y administra automáticamente los siguientes recursos:
-
-| Recurso | Estado | Descripción |
-|---------|:------:|-------------|
-| Resource Group | ✅ | Contenedor lógico de todos los recursos de CloudForge. |
-| Storage Account | ✅ | Almacenamiento utilizado por la plataforma. |
-| Log Analytics Workspace | ✅ | Centralización y consulta de registros. |
-| Application Insights | ✅ | Telemetría, monitorización y diagnóstico de la aplicación. |
-
-## Organización de Terraform
-
-```text
-infrastructure
-│
-├── bootstrap
-│
-├── environments
-│   ├── dev
-│   └── prod
-│
-├── modules
-│   ├── resource-group
-│   ├── storage
-│   ├── monitoring
-│   └── app-service
-│
-└── scripts
-```
-
-## Características implementadas
-
-- ✅ Infraestructura modular.
-- ✅ Variables por entorno.
-- ✅ Outputs reutilizables.
-- ✅ Código reutilizable mediante módulos.
-- ✅ Configuración preparada para varios entornos.
-- ✅ Integración con Azure Monitor.
-- ✅ Integración con Application Insights.
-- ✅ Preparado para ampliar la infraestructura en el futuro.
-
----
-
-# 🐳 Contenedorización
-
-CloudForge utiliza Docker para garantizar que la aplicación pueda ejecutarse de forma consistente en cualquier entorno.
-
-## Características
-
-- Imagen Docker multi-stage.
-- Imagen final optimizada para producción.
-- Ejecución como usuario no administrador.
-- Configuración mediante variables de entorno.
-- Health Checks preparados para despliegues automáticos.
-- Compatible con GitHub Actions.
-
-## Flujo de construcción
-
-```text
-Código fuente
-      │
-      ▼
-Docker Build
-      │
-      ▼
-Imagen Docker
-      │
-      ▼
-Ejecución del contenedor
-      │
-      ▼
-Health Check
-      │
-      ▼
-API disponible
-```
-
----
-
-# ⚙️ Integración Continua (CI)
-
-CloudForge incorpora un pipeline de **Integración Continua** mediante **GitHub Actions**.
-
-Cada vez que se realiza un cambio en el repositorio, el flujo de trabajo ejecuta automáticamente una serie de validaciones para garantizar la calidad del proyecto.
-
-## Validaciones automáticas
-
-- ✅ Restauración de dependencias.
-- ✅ Compilación de la solución.
-- ✅ Ejecución de pruebas automatizadas.
-- ✅ Construcción de la imagen Docker.
-- ✅ Ejecución del contenedor.
-- ✅ Validación del endpoint `/health`.
-
-## Flujo de Integración Continua
-
-```text
-Push a GitHub
-        │
-        ▼
-GitHub Actions
-        │
-        ▼
-Restaurar paquetes
-        │
-        ▼
-Compilar solución
-        │
-        ▼
-Ejecutar pruebas
-        │
-        ▼
-Construir imagen Docker
-        │
-        ▼
-Ejecutar contenedor
-        │
-        ▼
-Comprobar Health Check
-        │
-        ▼
-✅ Pipeline completado correctamente
-```
-
-Actualmente el proyecto dispone de un flujo de Integración Continua completamente automatizado que verifica que todos los cambios cumplen los requisitos mínimos antes de ser integrados.
-
----
-
-# 🧪 Calidad del proyecto
-
-CloudForge sigue un enfoque orientado a la calidad del software.
-
-Actualmente incluye:
-
-- ✅ 14 pruebas automatizadas.
-- ✅ Validación automática mediante GitHub Actions.
-- ✅ Build en modo Release.
-- ✅ Contenedores Docker validados automáticamente.
-- ✅ Health Checks para comprobar el estado de la API.
-- ✅ Arquitectura preparada para seguir creciendo.
-
-La calidad del código se valida automáticamente en cada integración mediante el pipeline de GitHub Actions.
-
----
-
-# 🚀 Cómo ejecutar el proyecto
-
-## Requisitos
-
-- .NET 10 SDK
-- Docker Desktop
-- Git
-- Terraform
-- Azure CLI (opcional para la infraestructura)
-
-## Clonar el repositorio
+**Requisitos:** .NET SDK 10 (la versión exacta está fijada en `global.json`) y, si quieres, Docker.
 
 ```bash
 git clone https://github.com/hectormac35/CloudForge.git
 cd CloudForge
+
+dotnet test                                 # compila y pasa todos los tests
+dotnet run --project src/CloudForge.Api     # http://localhost:5112  (OpenAPI en /openapi/v1.json)
 ```
 
-## Restaurar dependencias
-
-```bash
-dotnet restore
-```
-
-## Compilar
-
-```bash
-dotnet build
-```
-
-## Ejecutar pruebas
-
-```bash
-dotnet test
-```
-
-## Ejecutar la API
-
-```bash
-dotnet run --project src/CloudForge.Api
-```
-
-## Ejecutar mediante Docker
+Con Docker:
 
 ```bash
 docker build -f docker/Dockerfile -t cloudforge-api .
+docker run --rm -p 8080:8080 cloudforge-api
+```
 
-docker run -p 8080:8080 cloudforge-api
+Y para ver el ciclo completo por HTTP (registrar → intento no válido → start → succeed → listar):
+
+```bash
+./scripts/demo-api.sh                        # contra Docker (puerto 8080)
+./scripts/demo-api.sh http://localhost:5112  # contra dotnet run
+```
+
+> Los datos se guardan **en memoria**: se pierden al reiniciar la API. Está hecho así a propósito para que el proyecto arranque sin dependencias; ver [límites conocidos](#8-decisiones-y-límites-conocidos).
+
+---
+
+## 5. Tests
+
+| Capa | Qué se comprueba |
+|---|---|
+| Dominio | Validaciones del constructor, transiciones válidas y no válidas, duración, entorno no definido |
+| Aplicación | Registro, filtros y orden del listado, cambios de estado, despliegue inexistente |
+| Infraestructura | Repositorio en memoria: alta, duplicados, actualización y 200 altas concurrentes |
+| API (integración) | Con `WebApplicationFactory`: `201` + `Location`, ciclo completo por HTTP, `400`, `404`, `409` con `ProblemDetails`, filtros y enums como texto |
+
+```bash
+dotnet test --collect:"XPlat Code Coverage"   # con informe de cobertura (coverlet)
 ```
 
 ---
 
-# 📊 Estado del proyecto
+## 6. Infraestructura en Azure (Terraform)
 
-## Funcionalidades implementadas
+| Recurso | Módulo | Notas |
+|---|---|---|
+| Resource Group | `resource-group` | `rg-cloudforge-dev` |
+| Storage Account | `storage` | TLS 1.2 mínimo, sin blobs públicos |
+| Log Analytics Workspace | `monitoring` | Retención configurable (`log_retention_days`) |
+| Application Insights | `monitoring` | Basado en el workspace |
+| App Service Plan + Linux Web App | `app-service` | **Opcional**: ejecuta la imagen de GHCR, health check en `/health` |
 
-| Funcionalidad | Estado |
-|--------------|:------:|
-| Clean Architecture | ✅ |
-| ASP.NET Core 10 | ✅ |
-| Docker | ✅ |
-| Terraform | ✅ |
-| Azure Storage | ✅ |
-| Log Analytics | ✅ |
-| Application Insights | ✅ |
-| GitHub Actions (CI) | ✅ |
-| Publicación automática de imágenes Docker (GHCR) | ✅ |
-| CodeQL | ✅ |
-| Dependabot | ✅ |
-| Health Checks | ✅ |
-| Pruebas automatizadas | ✅ |
-| Release v1.0.0 | ✅ |
-| Continuous Delivery (CD) | 🚧 |
-| Despliegue automático en Azure | 🚧 |
+Todos los recursos llevan las etiquetas `project`, `environment` y `managed_by`, y el entorno sale de una variable en vez de estar escrito a mano.
 
----
+```bash
+cd infrastructure/environments/dev
+az login
+terraform init
+terraform plan                                   # solo RG, storage y monitorización
+terraform plan -var="enable_app_service=true" \
+               -var="web_app_name=app-cloudforge-<sufijo-unico>"   # añade la API
+```
 
-# 🗺️ Hoja de ruta
+<details>
+<summary><b>Por qué el App Service está desactivado por defecto</b></summary>
 
-## Fase 1 - Base del proyecto
+`enable_app_service` vale `false` para que un `terraform apply` sin pensar no cree recursos que puedan costar dinero. Con el plan `F1` (gratuito) `always_on` se desactiva automáticamente, porque ese plan no lo admite. La imagen tiene que ser pública en GHCR, o habría que añadir credenciales del registro.
+</details>
 
-- [x] Arquitectura Clean Architecture
-- [x] Dominio y casos de uso
-- [x] Pruebas automatizadas
-- [x] Docker
-- [x] GitHub Actions
+> El estado de Terraform (`*.tfstate`) y los planes (`tfplan`) están en `.gitignore`: contienen claves de los recursos y **nunca** deben subirse al repositorio.
 
 ---
 
-## Fase 2 - Infraestructura
+## 7. CI/CD y seguridad
 
-- [x] Terraform
-- [x] Azure Storage
-- [x] Log Analytics
-- [x] Application Insights
+<p align="center"><img src="docs/images/pipelines.png" alt="Pipelines de CI, validación de Terraform y publicación con Trivy" width="100%"></p>
 
----
+| Workflow | Cuándo | Qué hace |
+|---|---|---|
+| `ci.yml` | push y PR | build + tests · `terraform fmt` y `validate` (sin credenciales) · construye la imagen y espera a que `/health` responda |
+| `publish-container.yml` | push a `main` y etiquetas `v*` | vuelve a pasar los tests → construye la imagen → **Trivy** (falla con vulnerabilidades críticas o altas que tengan parche) → publica en GHCR |
+| `codeql.yml` | push, PR y cada lunes | análisis estático de C# |
+| `dependabot.yml` | semanal | actualizaciones de NuGet, GitHub Actions y la imagen base |
 
-## Fase 3 - Automatización
-
-- [x] Publicación automática de imágenes Docker (GHCR)
-- [x] Integración Continua con GitHub Actions
-- [x] Release v1.0.0
-- [ ] Continuous Delivery
-- [ ] Despliegue automático en Azure
+La imagen Docker es multi-stage, se ejecuta con un usuario sin privilegios (`$APP_UID`) y no incluye el SDK.
 
 ---
 
-## Fase 4 - Calidad
+## 8. Decisiones y límites conocidos
 
-- [x] CodeQL
-- [x] Dependabot
-- [x] Documentación técnica
-- [ ] Cobertura de código
-- [ ] SonarCloud
-
-# 👨‍💻 Autor
-
-**Héctor Macarrilla**
-
-Desarrollador de software especializado en tecnologías .NET, Cloud y DevOps.
-
-CloudForge es un proyecto desarrollado como portfolio profesional para demostrar conocimientos en:
-
-- Desarrollo backend.
-- Arquitectura de software.
-- Infraestructura como código.
-- Contenedores.
-- Automatización.
-- Cloud Computing.
+| Tema | Situación actual | Siguiente paso |
+|---|---|---|
+| Persistencia | En memoria (se pierde al reiniciar) | Repositorio con EF Core + Azure SQL o PostgreSQL detrás del mismo `IDeploymentRepository` |
+| Autenticación | La API es abierta | API key o Entra ID antes de exponerla públicamente |
+| Despliegue continuo | La imagen se publica sola; el App Service se crea con Terraform | Job que actualice el App Service tras publicar la imagen |
+| Estado remoto de Terraform | Local | Backend en Azure Storage con bloqueo |
+| Entornos | Solo `dev` | `prod` reutilizando los mismos módulos |
 
 ---
 
-⭐ Si el proyecto te resulta interesante, no dudes en darle una estrella al repositorio.
+<sub>Proyecto de portfolio de <b>Héctor Macarrilla</b> · .NET · Azure (AZ-104) · DevOps</sub>

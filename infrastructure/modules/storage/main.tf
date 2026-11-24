@@ -10,7 +10,7 @@ resource "azurerm_storage_account" "this" {
 
   tags = {
     project     = "CloudForge"
-    environment = "dev"
+    environment = var.environment
     managed_by  = "Terraform"
   }
 }
