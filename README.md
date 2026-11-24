@@ -80,6 +80,8 @@ CloudForge/
 | `POST` | `/api/deployments/{id}/fail` | `Running → Failed` |
 | `POST` | `/api/deployments/{id}/cancel` | Cancela si todavía no ha terminado |
 
+<p align="center"><img src="docs/images/api-demo.png" alt="Salida real de la API: 201, 409 con ProblemDetails, start y succeed con duración" width="100%"></p>
+
 Los enums viajan como texto (`"Staging"`, `"Running"`) y **todos los errores** siguen el estándar RFC 9457 (`application/problem+json`):
 
 | Situación | Código |
